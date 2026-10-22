@@ -1,0 +1,6 @@
+{
+  "name": "Snake & Ladder Quiz Arena",
+  "description": "Interactive classroom educational quiz game web application designed for primary school teachers to conduct multiplayer board game quizzes on screen or projector.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "1.0",
+  "exportedAt": "2026-10-20T22:00:00.000Z",
+  "quizzes": [
+    {
+      "id": "quiz_sample_curriculum",
+      "title": "Primary Science & General Knowledge Starter",
+      "subject": "General Science",
+      "yearLevel": "Year 4",
+      "topic": "Nature, Human Body & Energy",
+      "language": "English",
+      "description": "Sample starter quiz for classroom Snake & Ladder arena games.",
+      "createdAt": 1714000000000,
+      "updatedAt": 1714000000000,
+      "questions": [
+        {
+          "id": "sample_q1",
+          "question": "Which gas do plants release during photosynthesis?",
+          "type": "MCQ",
+          "options": [
+            { "label": "A", "text": "Carbon Dioxide" },
+            { "label": "B", "text": "Oxygen" },
+            { "label": "C", "text": "Nitrogen" },
+            { "label": "D", "text": "Hydrogen" }
+          ],
+          "correctAnswer": "B",
+          "explanation": "Photosynthesis uses sunlight, water, and carbon dioxide to produce glucose and oxygen.",
+          "difficulty": "Easy"
+        },
+        {
+          "id": "sample_q2",
+          "question": "Sound travels faster in solids than in air.",
+          "type": "TRUE_FALSE",
+          "options": [],
+          "correctAnswer": "TRUE",
+          "explanation": "Molecules in solids are packed tightly together, allowing sound waves to transfer energy rapidly.",
+          "difficulty": "Medium"
+        },
+        {
+          "id": "sample_q3",
+          "question": "What is the boiling point of pure water at standard atmospheric pressure in degrees Celsius?",
+          "type": "SHORT_ANSWER",
+          "options": [],
+          "correctAnswer": "100",
+          "acceptedAnswers": ["100 C", "100 degrees", "one hundred"],
+          "explanation": "Water boils at 100 degrees Celsius under standard atmospheric pressure.",
+          "difficulty": "Easy"
+        }
+      ]
+    }
+  ],
+  "settings": {
+    "language": "en",
+    "soundEnabled": true,
+    "classroomMode": false,
+    "winningRule": "REACH_OR_PASS",
+    "penaltyRule": "NO_MOVE",
+    "questionTimerSeconds": 0,
+    "reducedMotion": false
+  }
+}

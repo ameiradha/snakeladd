@@ -1,0 +1,39 @@
+QUESTION: Which planet is known as the Red Planet?
+TYPE: MCQ
+A: Earth
+B: Mars
+C: Jupiter
+D: Venus
+ANSWER: B
+DIFFICULTY: Easy
+EXPLANATION: Mars appears reddish because of iron-rich minerals on its surface.
+
+QUESTION: Plants need sunlight to make food.
+TYPE: TRUE_FALSE
+ANSWER: TRUE
+DIFFICULTY: Easy
+EXPLANATION: Plants use sunlight during photosynthesis.
+
+QUESTION: What is 5 multiplied by 4?
+TYPE: SHORT_ANSWER
+ANSWER: 20
+ACCEPTED_ANSWERS: twenty
+DIFFICULTY: Easy
+EXPLANATION: Five groups of four equal twenty.
+
+QUESTION: Apakah organ utama yang mengepam darah ke seluruh badan manusia?
+TYPE: SHORT_ANSWER
+ANSWER: Jantung
+ACCEPTED_ANSWERS: organ jantung, heart
+DIFFICULTY: Easy
+EXPLANATION: Jantung bertindak sebagai pam berotot yang mengepam darah ke seluruh tubuh.
+
+QUESTION: Manakah antara berikut merupakan konduktor elektrik yang baik?
+TYPE: MCQ
+A: Pembaris plastik
+B: Paku besi
+C: Pemadam getah
+D: Sudu kayu
+ANSWER: B
+DIFFICULTY: Easy
+EXPLANATION: Logam seperti besi dan tembaga membenarkan arus elektrik mengalir melaluinya.
