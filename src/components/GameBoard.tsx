@@ -5,7 +5,12 @@ import { LADDERS, SNAKES, getSquareCoordinates } from '../game/constants';
 interface GameBoardProps {
   teams: Team[];
   activeTeamIndex: number;
-  activeEncounter: { type: 'snake' | 'ladder'; from: number; to: number } | null;
+  activeEncounter: {
+    type: 'snake' | 'ladder';
+    from: number;
+    to: number;
+    progress?: number;
+  } | null;
   onSquareClick?: (squareNumber: number) => void;
 }
 
@@ -35,6 +40,48 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     }
     return list;
   }, []);
+
+  // Calculate coordinates for the active gliding token during snake/ladder transit
+  const activeGlidingToken = useMemo(() => {
+    if (
+      !activeEncounter ||
+      activeEncounter.progress === undefined ||
+      activeEncounter.progress <= 0 ||
+      activeEncounter.progress >= 1
+    ) {
+      return null;
+    }
+    const activeTeam = teams[activeTeamIndex];
+    if (!activeTeam) return null;
+
+    const t = activeEncounter.progress;
+    const fromCoord = getSquareCoordinates(activeEncounter.from);
+    const toCoord = getSquareCoordinates(activeEncounter.to);
+
+    const x1 = fromCoord.xPercent * 10;
+    const y1 = fromCoord.yPercent * 10;
+    const x2 = toCoord.xPercent * 10;
+    const y2 = toCoord.yPercent * 10;
+
+    let x = x1 + (x2 - x1) * t;
+    let y = y1 + (y2 - y1) * t;
+
+    if (activeEncounter.type === 'snake') {
+      const midX = (x1 + x2) / 2;
+      const midY = (y1 + y2) / 2;
+      const curveFactor = 40;
+      const c1x = x1 + (midX - x1) * 0.5 + curveFactor;
+      const c1y = y1 + (midY - y1) * 0.5 - curveFactor;
+      const c2x = midX + (x2 - midX) * 0.5 - curveFactor;
+      const c2y = midY + (y2 - midY) * 0.5 + curveFactor;
+
+      const mt = 1 - t;
+      x = mt * mt * mt * x1 + 3 * mt * mt * t * c1x + 3 * mt * t * t * c2x + t * t * t * x2;
+      y = mt * mt * mt * y1 + 3 * mt * mt * t * c1y + 3 * mt * t * t * c2y + t * t * t * y2;
+    }
+
+    return { team: activeTeam, x, y };
+  }, [activeEncounter, teams, activeTeamIndex]);
 
   return (
     <div className="relative w-full h-[calc(100vh-140px)] max-h-[780px] aspect-square mx-auto select-none rounded-3xl p-2 sm:p-3 bg-white border-2 border-slate-200 shadow-xl flex flex-col justify-center">
@@ -120,12 +167,12 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                 )}
                 {hasLadderStart && (
                   <span className="text-[9px] sm:text-[11px] font-black text-amber-950 bg-amber-300 border border-amber-400 px-1.5 py-0.5 rounded shadow-xs flex items-center gap-0.5">
-                    🪜 TANGGA &rarr;{hasLadderStart.end}
+                    🪜 KAKI TANGGA
                   </span>
                 )}
                 {hasSnakeStart && (
-                  <span className="text-[9px] sm:text-[11px] font-black text-rose-950 bg-rose-300 border border-rose-400 px-1.5 py-0.5 rounded shadow-xs flex items-center gap-0.5">
-                    🐍 KEPALA &darr;{hasSnakeStart.end}
+                  <span className="text-[9px] sm:text-[11px] font-black text-white bg-rose-600 border border-rose-700 px-1.5 py-0.5 rounded shadow-xs flex items-center gap-0.5 animate-pulse">
+                    🐍 KEPALA ULAR
                   </span>
                 )}
               </div>
@@ -134,6 +181,17 @@ export const GameBoard: React.FC<GameBoardProps> = ({
               <div className="relative flex flex-wrap items-center justify-center gap-1 z-20 my-auto">
                 {squareTeams.map((t) => {
                   const isActive = teams[activeTeamIndex]?.id === t.id;
+                  // If the active team is in transit along snake/ladder, hide from static square!
+                  if (
+                    isActive &&
+                    activeEncounter &&
+                    activeEncounter.progress !== undefined &&
+                    activeEncounter.progress > 0 &&
+                    activeEncounter.progress < 1
+                  ) {
+                    return null;
+                  }
+
                   return (
                     <div
                       key={t.id}
@@ -163,23 +221,23 @@ export const GameBoard: React.FC<GameBoardProps> = ({
               {/* Bottom Square Footer: Sub-labels indicating destination/source */}
               <div className="z-10 pointer-events-none mt-auto">
                 {hasLadderStart && (
-                  <div className="text-[8px] sm:text-[10px] font-black text-amber-900 bg-amber-200/90 px-1 py-0.5 rounded text-center border border-amber-300 shadow-xs">
-                    Naik ke #{hasLadderStart.end}
+                  <div className="text-[8px] sm:text-[10px] font-black text-amber-950 bg-amber-200/95 px-1 py-0.5 rounded text-center border border-amber-400 shadow-xs">
+                    Panjat ke #{hasLadderStart.end}
                   </div>
                 )}
                 {hasSnakeStart && (
-                  <div className="text-[8px] sm:text-[10px] font-black text-rose-900 bg-rose-200/90 px-1 py-0.5 rounded text-center border border-rose-300 shadow-xs">
-                    Turun ke #{hasSnakeStart.end}
+                  <div className="text-[8px] sm:text-[10px] font-black text-rose-950 bg-rose-200/95 px-1 py-0.5 rounded text-center border border-rose-400 shadow-xs">
+                    Gelongsor ke #{hasSnakeStart.end}
                   </div>
                 )}
                 {hasLadderEnd && (
                   <div className="text-[8px] sm:text-[10px] font-bold text-amber-800 bg-amber-50/90 px-1 py-0.5 rounded text-center border border-amber-200">
-                    ▲ Puncak (dr #{hasLadderEnd.start})
+                    ▲ Puncak (Selamat, dr #{hasLadderEnd.start})
                   </div>
                 )}
                 {hasSnakeEnd && (
                   <div className="text-[8px] sm:text-[10px] font-bold text-emerald-800 bg-emerald-50/90 px-1 py-0.5 rounded text-center border border-emerald-200">
-                    ▼ Ekor (dr #{hasSnakeEnd.start})
+                    ▼ Ekor (Selamat, dr #{hasSnakeEnd.start})
                   </div>
                 )}
               </div>
@@ -391,6 +449,39 @@ export const GameBoard: React.FC<GameBoardProps> = ({
               </g>
             );
           })}
+
+          {/* Active Gliding Token physically soaring along Ladder or sliding down Snake */}
+          {activeGlidingToken && (
+            <g className="z-40" filter="url(#activeHalo)">
+              {/* Outer celebratory glow halo */}
+              <circle
+                cx={activeGlidingToken.x}
+                cy={activeGlidingToken.y}
+                r={36}
+                fill={activeGlidingToken.team.color}
+                opacity={0.35}
+              />
+              {/* Main token body */}
+              <circle
+                cx={activeGlidingToken.x}
+                cy={activeGlidingToken.y}
+                r={26}
+                fill={activeGlidingToken.team.color}
+                stroke="#ffffff"
+                strokeWidth="4"
+              />
+              {/* Token Emoji Icon */}
+              <text
+                x={activeGlidingToken.x}
+                y={activeGlidingToken.y + 8}
+                textAnchor="middle"
+                fontSize="24"
+                className="select-none pointer-events-none"
+              >
+                {activeGlidingToken.team.icon}
+              </text>
+            </g>
+          )}
         </svg>
       </div>
     </div>

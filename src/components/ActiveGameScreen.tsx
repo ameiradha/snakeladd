@@ -515,8 +515,23 @@ export const ActiveGameScreen: React.FC<ActiveGameScreenProps> = ({
                   Pindahkan
                 </button>
               </div>
+
+              {/* Instant Test Landing on Snake / Ladder */}
+              <button
+                type="button"
+                onClick={() => {
+                  const targetTeamId = overrideSelectedTeamId || activeTeam.id;
+                  engine.testLandingSquare(targetTeamId, inspectSquare);
+                  setInspectSquare(null);
+                }}
+                className="w-full py-2 px-3 bg-gradient-to-r from-amber-500 to-rose-500 hover:from-amber-600 hover:to-rose-600 text-white text-xs font-black rounded-xl cursor-pointer shadow-sm transition active:scale-95 flex items-center justify-center gap-1.5"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Uji Pendaratan di Petak #{inspectSquare} (Aktifkan Ular/Tangga)</span>
+              </button>
+
               <p className="text-[11px] text-slate-400">
-                * Berguna untuk demonstrasi atau membetulkan kedudukan secara manual.
+                * Berguna untuk demonstrasi bilik darjah dan menguji pendaratan ular atau tangga secara langsung.
               </p>
             </div>
           </div>

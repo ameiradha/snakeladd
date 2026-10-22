@@ -17,6 +17,7 @@ export interface GameEngineState {
     type: 'snake' | 'ladder';
     from: number;
     to: number;
+    progress: number;
   } | null;
 }
 
@@ -344,7 +345,7 @@ export class GameEngine {
       return;
     }
 
-    // Check ladders (Foot of ladder -> climb up to top)
+    // Check ladders (ONLY Foot of ladder -> climb directly to top)
     const ladder = LADDERS.find((l) => l.start === landingSquare);
     if (ladder) {
       this.state.phase = 'SNAKE_LADDER_ANIM';
@@ -352,42 +353,56 @@ export class GameEngine {
         type: 'ladder',
         from: ladder.start,
         to: ladder.end,
+        progress: 0,
       };
-      this.state.lastActionDescription = `🪜 TAHNIAH! ${currentTeam.name} mendarat di KAKI TANGGA Petak ${ladder.start}! Memanjat ke Petak ${ladder.end}!`;
+      this.state.lastActionDescription = `🪜 TAHNIAH! ${currentTeam.name} mendarat tepat di KAKI TANGGA Petak ${ladder.start}! Memanjat terus ke Petak ${ladder.end}!`;
       soundManager.playLadderClimb();
       this.emit();
 
-      // Pause for 1000ms on ladder base so classroom clearly sees exact landing
+      // Hold on the ladder foot for 900ms so classroom clearly sees exact landing on ladder foot
       setTimeout(() => {
-        let step = ladder.start;
-        const climbInterval = setInterval(() => {
-          if (step < ladder.end) {
-            step++;
-            soundManager.playStep();
+        let p = 0;
+        const transitInterval = setInterval(() => {
+          p = Math.min(1, p + 0.05);
+          if (p >= 1) {
+            clearInterval(transitInterval);
+            // Arrival strictly at ladder.end
             const updated = [...this.state.teams];
             updated[this.state.activeTeamIndex] = {
               ...updated[this.state.activeTeamIndex],
-              currentSquare: step,
+              currentSquare: ladder.end,
             };
             this.state.teams = updated;
-            this.emit();
-          } else {
-            clearInterval(climbInterval);
-            this.state.lastActionDescription = `🪜 ${currentTeam.name} kini selamat sampai di Petak ${ladder.end}!`;
+            this.state.snakeLadderEncounter = {
+              type: 'ladder',
+              from: ladder.start,
+              to: ladder.end,
+              progress: 1,
+            };
+            this.state.lastActionDescription = `🪜 ${currentTeam.name} selamat tiba di Puncak Tangga Petak ${ladder.end}!`;
+            soundManager.playStep();
             this.emit();
 
-            // Pause for 1200ms on destination so classroom sees final position
+            // Pause for 1200ms on top destination so classroom sees final position clearly
             setTimeout(() => {
               this.state.snakeLadderEncounter = null;
               this.advanceTurn();
             }, 1200);
+          } else {
+            if (this.state.snakeLadderEncounter) {
+              this.state.snakeLadderEncounter = {
+                ...this.state.snakeLadderEncounter,
+                progress: p,
+              };
+              this.emit();
+            }
           }
-        }, 80);
-      }, 1000);
+        }, 40);
+      }, 900);
       return;
     }
 
-    // Check snakes (Head of snake -> slide down to tail)
+    // Check snakes (ONLY Head of snake -> slide directly to tail)
     const snake = SNAKES.find((s) => s.start === landingSquare);
     if (snake) {
       this.state.phase = 'SNAKE_LADDER_ANIM';
@@ -395,38 +410,52 @@ export class GameEngine {
         type: 'snake',
         from: snake.start,
         to: snake.end,
+        progress: 0,
       };
-      this.state.lastActionDescription = `🐍 AWAS! ${currentTeam.name} mendarat di KEPALA ULAR Petak ${snake.start}! Menggelongsor turun ke Petak ${snake.end}!`;
+      this.state.lastActionDescription = `🐍 AWAS! ${currentTeam.name} mendarat tepat di KEPALA ULAR Petak ${snake.start}! Menggelongsor turun terus ke Petak ${snake.end}!`;
       soundManager.playSnakeSlide();
       this.emit();
 
-      // Pause for 1000ms on snake head so classroom clearly sees exact landing
+      // Hold on snake head for 900ms so classroom clearly sees exact landing on the head
       setTimeout(() => {
-        let step = snake.start;
-        const slideInterval = setInterval(() => {
-          if (step > snake.end) {
-            step--;
-            soundManager.playStep();
+        let p = 0;
+        const transitInterval = setInterval(() => {
+          p = Math.min(1, p + 0.05);
+          if (p >= 1) {
+            clearInterval(transitInterval);
+            // Arrival strictly at snake.end
             const updated = [...this.state.teams];
             updated[this.state.activeTeamIndex] = {
               ...updated[this.state.activeTeamIndex],
-              currentSquare: step,
+              currentSquare: snake.end,
             };
             this.state.teams = updated;
-            this.emit();
-          } else {
-            clearInterval(slideInterval);
-            this.state.lastActionDescription = `🐍 ${currentTeam.name} kini berada di Petak ${snake.end}.`;
+            this.state.snakeLadderEncounter = {
+              type: 'snake',
+              from: snake.start,
+              to: snake.end,
+              progress: 1,
+            };
+            this.state.lastActionDescription = `🐍 ${currentTeam.name} kini berada di Ekor Ular Petak ${snake.end}.`;
+            soundManager.playStep();
             this.emit();
 
-            // Pause for 1200ms on destination so classroom sees final position
+            // Pause for 1200ms on tail destination
             setTimeout(() => {
               this.state.snakeLadderEncounter = null;
               this.advanceTurn();
             }, 1200);
+          } else {
+            if (this.state.snakeLadderEncounter) {
+              this.state.snakeLadderEncounter = {
+                ...this.state.snakeLadderEncounter,
+                progress: p,
+              };
+              this.emit();
+            }
           }
-        }, 80);
-      }, 1000);
+        }, 40);
+      }, 900);
       return;
     }
 
@@ -465,5 +494,19 @@ export class GameEngine {
     const updated = this.state.teams.map((t) => (t.id === teamId ? { ...t, currentSquare: clamped } : t));
     this.state.teams = updated;
     this.emit();
+  }
+
+  // Teacher test landing directly on any square (e.g. testing snake head or ladder base)
+  public testLandingSquare(teamId: string, squareNumber: number) {
+    this.pushSnapshot(`Testing landing on square ${squareNumber} for team ${teamId}`);
+    const teamIndex = this.state.teams.findIndex((t) => t.id === teamId);
+    if (teamIndex === -1) return;
+    this.state.activeTeamIndex = teamIndex;
+    const clamped = Math.max(1, Math.min(BOARD_SIZE, squareNumber));
+    const updated = [...this.state.teams];
+    updated[teamIndex] = { ...updated[teamIndex], currentSquare: clamped };
+    this.state.teams = updated;
+    this.emit();
+    this.checkFinalSquareAndSnakesLadders(clamped);
   }
 }
