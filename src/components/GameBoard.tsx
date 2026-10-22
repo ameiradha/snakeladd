@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { Team } from '../types';
 import { LADDERS, SNAKES, getSquareCoordinates } from '../game/constants';
 
@@ -69,7 +69,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     if (activeEncounter.type === 'snake') {
       const midX = (x1 + x2) / 2;
       const midY = (y1 + y2) / 2;
-      const curveFactor = 40;
+      const curveFactor = 65;
       const c1x = x1 + (midX - x1) * 0.5 + curveFactor;
       const c1y = y1 + (midY - y1) * 0.5 - curveFactor;
       const c2x = midX + (x2 - midX) * 0.5 - curveFactor;
@@ -83,10 +83,50 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     return { team: activeTeam, x, y };
   }, [activeEncounter, teams, activeTeamIndex]);
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [boardSize, setBoardSize] = useState<number | null>(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const updateSize = () => {
+      const { clientWidth, clientHeight } = container;
+      if (clientWidth > 0 && clientHeight > 0) {
+        // Compute strict square that fits within both available width and height
+        const available = Math.min(clientWidth, clientHeight);
+        setBoardSize(Math.floor(available));
+      }
+    };
+
+    updateSize();
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(() => {
+        updateSize();
+      });
+      resizeObserver.observe(container);
+    }
+
+    window.addEventListener('resize', updateSize);
+    return () => {
+      if (resizeObserver) resizeObserver.disconnect();
+      window.removeEventListener('resize', updateSize);
+    };
+  }, []);
+
   return (
-    <div className="relative w-full h-[calc(100vh-140px)] max-h-[780px] aspect-square mx-auto select-none rounded-3xl p-2 sm:p-3 bg-white border-2 border-slate-200 shadow-xl flex flex-col justify-center">
-      {/* 10x10 Grid container */}
-      <div className="relative w-full h-full grid grid-cols-10 grid-rows-10 rounded-2xl overflow-hidden border-2 border-slate-300 bg-white shadow-inner">
+    <div
+      ref={containerRef}
+      className="w-full h-full flex items-center justify-center min-h-0 min-w-0 overflow-hidden p-1"
+    >
+      <div
+        style={boardSize ? { width: `${boardSize}px`, height: `${boardSize}px` } : undefined}
+        className="relative max-w-full max-h-full aspect-square select-none rounded-3xl p-1.5 sm:p-2.5 bg-white border-2 border-slate-200 shadow-xl flex flex-col justify-center"
+      >
+        {/* 10x10 Grid container */}
+        <div className="relative w-full h-full grid grid-cols-10 grid-rows-10 rounded-2xl overflow-hidden border-2 border-slate-300 bg-white shadow-inner">
         {squares.map(({ num, row, col }) => {
           const squareTeams = teamsBySquare.get(num) || [];
           const hasLadderStart = LADDERS.find((l) => l.start === num);
@@ -249,6 +289,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         <svg
           className="absolute inset-0 w-full h-full pointer-events-none z-15"
           viewBox="0 0 1000 1000"
+          preserveAspectRatio="none"
         >
           <defs>
             <linearGradient id="ladderRail" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -485,5 +526,6 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         </svg>
       </div>
     </div>
-  );
+  </div>
+);
 };
