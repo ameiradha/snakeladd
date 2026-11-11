@@ -24,7 +24,6 @@ import { GameHistoryView } from './components/GameHistoryView';
 import { AIQuizGenerator } from './components/AIQuizGenerator';
 import { TextQuizImporter } from './components/TextQuizImporter';
 import { JSONBackupModal } from './components/JSONBackupModal';
-import { AuthModal } from './components/AuthModal';
 import { SettingsModal } from './components/SettingsModal';
 import { OfflineIndicator } from './components/OfflineIndicator';
 
@@ -56,7 +55,6 @@ export default function App() {
   const [isTextImporterOpen, setIsTextImporterOpen] = useState(false);
   const [isJSONBackupOpen, setIsJSONBackupOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
 
   // Load quizzes (combines local built-in quizzes and private quizzes of logged-in user)
@@ -122,8 +120,14 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  const handleLogin = () => {
-    setIsAuthModalOpen(true);
+  const handleLogin = async () => {
+    try {
+      const logged = await loginWithGoogle();
+      setCurrentUser(logged);
+      await refreshAllData(logged);
+    } catch (err: any) {
+      alert('Gagal log masuk: ' + (err.message || String(err)));
+    }
   };
 
   const handleLogout = async () => {
@@ -476,13 +480,6 @@ export default function App() {
           settings={settings}
           onSave={handleSaveSettings}
           onClose={() => setIsSettingsOpen(false)}
-        />
-      )}
-
-      {isAuthModalOpen && (
-        <AuthModal
-          onClose={() => setIsAuthModalOpen(false)}
-          onSuccess={() => refreshAllData(auth.currentUser)}
         />
       )}
 
