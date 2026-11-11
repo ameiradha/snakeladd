@@ -20,14 +20,17 @@ export interface Question {
 export interface Quiz {
   id: string;
   title: string;
-  subject: string;
-  yearLevel: string;
-  topic: string;
+  subject?: string;
+  yearLevel?: string;
+  topic?: string;
   language: 'en' | 'ms' | 'English' | 'Bahasa Melayu';
   description?: string;
   questions: Question[];
   createdAt: number;
   updatedAt: number;
+  userId?: string;
+  userEmail?: string;
+  isPrivate?: boolean;
 }
 
 export interface Team {

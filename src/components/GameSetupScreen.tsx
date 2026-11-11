@@ -182,10 +182,22 @@ export const GameSetupScreen: React.FC<GameSetupScreenProps> = ({
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <div className="flex items-center gap-2 text-xs text-slate-500 mb-1">
-                        <span className="font-extrabold text-amber-700">{q.subject}</span>
-                        <span>&bull;</span>
-                        <span>{q.yearLevel}</span>
+                      <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500 mb-1">
+                        {q.isPrivate ? (
+                          <span className="font-extrabold text-emerald-800 bg-emerald-100/80 px-1.5 py-0.5 rounded">
+                            🔒 Peribadi
+                          </span>
+                        ) : q.subject ? (
+                          <span className="font-extrabold text-amber-700 bg-amber-100/70 px-1.5 py-0.5 rounded">{q.subject}</span>
+                        ) : (
+                          <span className="font-extrabold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded">Kuiz</span>
+                        )}
+                        {q.yearLevel && (
+                          <>
+                            <span>&bull;</span>
+                            <span>{q.yearLevel}</span>
+                          </>
+                        )}
                         <span>&bull;</span>
                         <span>{q.language}</span>
                       </div>

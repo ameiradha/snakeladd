@@ -1,6 +1,7 @@
 import React from 'react';
 import { PWAInstallButton } from './PWAInstallButton';
-import { Play, Maximize, Minimize, Languages } from 'lucide-react';
+import { Play, Maximize, Minimize, Languages, LogIn, LogOut, User as UserIcon } from 'lucide-react';
+import type { User as FirebaseUser } from 'firebase/auth';
 
 interface HeaderProps {
   currentView: 'dashboard' | 'game_setup' | 'active_game' | 'quiz_library' | 'game_history';
@@ -10,6 +11,9 @@ interface HeaderProps {
   onToggleClassroomMode: () => void;
   language: 'en' | 'ms';
   onToggleLanguage: () => void;
+  user?: FirebaseUser | null;
+  onLogin?: () => void;
+  onLogout?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -20,6 +24,9 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleClassroomMode,
   language,
   onToggleLanguage,
+  user,
+  onLogin,
+  onLogout,
 }) => {
   // Classroom Mode top bar
   if (isClassroomMode) {
@@ -126,6 +133,49 @@ export const Header: React.FC<HeaderProps> = ({
           <Maximize className="w-3.5 h-3.5 text-amber-600" />
           <span>Mod Projektor</span>
         </button>
+
+        {/* User Account / Email Status */}
+        {user ? (
+          <div className="flex items-center gap-2 pl-1 border-l border-slate-200">
+            <div
+              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-xl text-xs font-bold text-slate-800 border border-slate-300 max-w-[170px] truncate"
+              title={`Log masuk sebagai: ${user.email}`}
+            >
+              {user.photoURL ? (
+                <img
+                  src={user.photoURL}
+                  alt={user.displayName || 'User'}
+                  className="w-4 h-4 rounded-full"
+                />
+              ) : (
+                <UserIcon className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+              )}
+              <span className="truncate">{user.email || user.displayName || 'Guru'}</span>
+            </div>
+            {onLogout && (
+              <button
+                type="button"
+                onClick={onLogout}
+                title="Log Keluar"
+                className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 cursor-pointer transition"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        ) : (
+          onLogin && (
+            <button
+              type="button"
+              onClick={onLogin}
+              title="Log Masuk dengan Google/Email untuk simpan soalan peribadi"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border-2 border-emerald-300 bg-emerald-50 text-xs font-bold text-emerald-800 hover:bg-emerald-100 cursor-pointer transition whitespace-nowrap shrink-0"
+            >
+              <LogIn className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Log Masuk</span>
+            </button>
+          )
+        )}
 
         <button
           type="button"

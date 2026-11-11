@@ -46,10 +46,11 @@ app.post('/api/generate-quiz', async (req: Request, res: Response) => {
   }
 
   const {
-    promptDescription,
-    subject = 'Science',
-    yearLevel = 'Year 4',
-    topic = 'General Science',
+    promptDescription = '',
+    title = '',
+    subject = '',
+    yearLevel = '',
+    topic = '',
     language = 'en',
     count = 10,
     difficulty = 'Medium',
@@ -60,7 +61,7 @@ app.post('/api/generate-quiz', async (req: Request, res: Response) => {
   } = req.body || {};
 
   const numQuestions = Math.min(Math.max(parseInt(count, 10) || 10, 1), 30);
-  const targetLanguage = language === 'ms' || language.toLowerCase().includes('malay') 
+  const targetLanguage = language === 'ms' || String(language).toLowerCase().includes('malay') 
     ? 'Bahasa Melayu' 
     : 'English';
 
@@ -74,91 +75,121 @@ app.post('/api/generate-quiz', async (req: Request, res: Response) => {
       },
     });
 
-    const systemInstruction = `You are an expert primary school educational curriculum designer and teacher.
+    const userInstructions = promptDescription || title || topic || subject || 'General Knowledge';
+    const systemInstruction = `You are an expert quiz designer and teacher.
 Generate a structured quiz suitable for classroom board games (Snake & Ladder Quiz Arena).
-Target audience: Primary school students (${yearLevel}).
 Language: ${targetLanguage}.
-Topic: ${topic} (${subject}).
 Difficulty requested: ${difficulty}.
 Questions requested: ${numQuestions}.
 Question format requested: ${questionType}.
-${curriculumStandard ? `Curriculum standard to align with: ${curriculumStandard}` : ''}
-${promptDescription ? `Additional teacher instructions: "${promptDescription}"` : ''}
+Teacher instructions & context: "${userInstructions}".
 
 Rules:
 1. Every question must be engaging, clear, age-appropriate, and strictly factually accurate.
 2. For MCQ: provide 4 distinct, unambiguous options with labels A, B, C, D. Specify the correct letter (e.g. "B") in correctAnswer.
 3. For TRUE_FALSE: correctAnswer must be strictly either "TRUE" or "FALSE".
 4. For SHORT_ANSWER: correctAnswer must be a concise answer (1-3 words). Provide common synonyms or alternative accepted spellings in acceptedAnswers ${includeAlternatives ? 'when applicable' : ''}.
-5. ${includeExplanations ? 'Provide a clear, educational, age-appropriate explanation for why the answer is correct.' : 'Provide a short explanation.'}
+5. ${includeExplanations ? 'Provide a clear, educational explanation for why the answer is correct.' : 'Provide a short explanation.'}
 6. Ensure all UTF-8 characters and accented Malay words are preserved cleanly.`;
 
-    const userPrompt = `Please generate ${numQuestions} educational questions for ${yearLevel} students on the topic "${topic}" in subject "${subject}".
+    const userPrompt = `Please generate ${numQuestions} educational questions based on: "${userInstructions}".
 Language: ${targetLanguage}.
 Question Type: ${questionType}.
 Difficulty: ${difficulty}.`;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-3.8-flash',
-      contents: userPrompt,
-      config: {
-        systemInstruction,
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: Type.ARRAY,
-          description: 'List of educational quiz questions',
-          items: {
-            type: Type.OBJECT,
-            properties: {
-              question: {
-                type: Type.STRING,
-                description: 'The question text presented to students',
-              },
-              type: {
-                type: Type.STRING,
-                description: 'One of: MCQ, TRUE_FALSE, SHORT_ANSWER',
-              },
-              options: {
-                type: Type.ARRAY,
-                description: 'Array of 4 options for MCQ (empty for TRUE_FALSE or SHORT_ANSWER)',
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    label: { type: Type.STRING, description: 'Option key: A, B, C, or D' },
-                    text: { type: Type.STRING, description: 'Option answer text' }
-                  },
-                  required: ['label', 'text']
-                }
-              },
-              correctAnswer: {
-                type: Type.STRING,
-                description: 'For MCQ: A, B, C, or D. For TRUE_FALSE: TRUE or FALSE. For SHORT_ANSWER: canonical text answer'
-              },
-              acceptedAnswers: {
-                type: Type.ARRAY,
-                items: { type: Type.STRING },
-                description: 'Alternative accepted answers for SHORT_ANSWER questions'
-              },
-              explanation: {
-                type: Type.STRING,
-                description: 'Clear pedagogical explanation'
-              },
-              difficulty: {
-                type: Type.STRING,
-                description: 'Easy, Medium, or Hard'
+    // Model cascade starting from lighter/faster model first as requested:
+    // 1. gemini-3.1-flash-lite (lightest, highest availability)
+    // 2. gemini-flash-latest (general flash alias)
+    // 3. gemini-3.8-flash (standard flash model)
+    const candidateModels = [
+      'gemini-3.1-flash-lite',
+      'gemini-flash-latest',
+      'gemini-3.8-flash',
+    ];
+
+    const generateConfig = {
+      systemInstruction,
+      responseMimeType: 'application/json',
+      responseSchema: {
+        type: Type.ARRAY,
+        description: 'List of educational quiz questions',
+        items: {
+          type: Type.OBJECT,
+          properties: {
+            question: {
+              type: Type.STRING,
+              description: 'The question text presented to students',
+            },
+            type: {
+              type: Type.STRING,
+              description: 'One of: MCQ, TRUE_FALSE, SHORT_ANSWER',
+            },
+            options: {
+              type: Type.ARRAY,
+              description: 'Array of 4 options for MCQ (empty for TRUE_FALSE or SHORT_ANSWER)',
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  label: { type: Type.STRING, description: 'Option key: A, B, C, or D' },
+                  text: { type: Type.STRING, description: 'Option answer text' }
+                },
+                required: ['label', 'text']
               }
             },
-            required: ['question', 'type', 'correctAnswer', 'difficulty']
-          }
+            correctAnswer: {
+              type: Type.STRING,
+              description: 'For MCQ: A, B, C, or D. For TRUE_FALSE: TRUE or FALSE. For SHORT_ANSWER: canonical text answer'
+            },
+            acceptedAnswers: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING },
+              description: 'Alternative accepted answers for SHORT_ANSWER questions'
+            },
+            explanation: {
+              type: Type.STRING,
+              description: 'Clear pedagogical explanation'
+            },
+            difficulty: {
+              type: Type.STRING,
+              description: 'Easy, Medium, or Hard'
+            }
+          },
+          required: ['question', 'type', 'correctAnswer', 'difficulty']
         }
       }
-    });
+    };
 
-    const rawText = response.text ? response.text.trim() : '';
-    if (!rawText) {
-      throw new Error('Received empty response from AI model');
+    let response: any = null;
+    let lastError: any = null;
+    let usedModel = '';
+
+    for (const modelName of candidateModels) {
+      try {
+        console.log(`[AI Generation] Mencuba model: ${modelName}...`);
+        response = await ai.models.generateContent({
+          model: modelName,
+          contents: userPrompt,
+          config: generateConfig,
+        });
+
+        const rawText = response.text ? response.text.trim() : '';
+        if (rawText && rawText.length > 0) {
+          usedModel = modelName;
+          console.log(`[AI Generation] Berjaya dijana menggunakan model: ${modelName}`);
+          break;
+        }
+      } catch (err: any) {
+        lastError = err;
+        console.warn(`[AI Generation] Model ${modelName} gagal atau sedang sibuk (503/429):`, err?.message || err);
+        // Continue to the next fallback model in the list
+      }
     }
 
+    if (!response || !response.text || response.text.trim().length === 0) {
+      throw lastError || new Error('Semua model Gemini sedang mengalami kesesakan sementara. Sila cuba sebentar lagi.');
+    }
+
+    const rawText = response.text.trim();
     const parsedQuestions = JSON.parse(rawText);
     if (!Array.isArray(parsedQuestions) || parsedQuestions.length === 0) {
       throw new Error('AI output did not contain an array of questions');
@@ -212,16 +243,19 @@ Difficulty: ${difficulty}.`;
       };
     });
 
+    const generatedQuizTitle = title.trim() || promptDescription.trim().slice(0, 50) || topic.trim() || (subject ? `${subject} Quiz` : 'Snake & Ladder Quiz');
+
     return res.json({
       success: true,
-      title: `${subject}: ${topic} (${yearLevel})`,
-      subject,
-      yearLevel,
-      topic,
+      title: generatedQuizTitle,
+      subject: subject || 'General',
+      yearLevel: yearLevel || 'All Grades',
+      topic: topic || generatedQuizTitle,
       language: targetLanguage,
       questions: sanitizedQuestions,
       meta: {
         count: sanitizedQuestions.length,
+        model: usedModel,
         generatedAt: new Date().toISOString()
       }
     });

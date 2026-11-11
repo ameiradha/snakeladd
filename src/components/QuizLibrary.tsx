@@ -45,16 +45,16 @@ export const QuizLibrary: React.FC<QuizLibraryProps> = ({
   const [sortBy, setSortBy] = useState<'date' | 'name' | 'questions'>('date');
   const [previewQuiz, setPreviewQuiz] = useState<Quiz | null>(null);
 
-  // Derive subjects & years
-  const subjects = Array.from(new Set(quizzes.map((q) => q.subject))).filter(Boolean);
-  const years = Array.from(new Set(quizzes.map((q) => q.yearLevel))).filter(Boolean);
+  // Derive subjects & years safely
+  const subjects = Array.from(new Set(quizzes.map((q) => q.subject).filter(Boolean))) as string[];
+  const years = Array.from(new Set(quizzes.map((q) => q.yearLevel).filter(Boolean))) as string[];
 
   const filteredQuizzes = quizzes
     .filter((q) => {
       const matchSearch =
         q.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        q.topic.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        q.subject.toLowerCase().includes(searchQuery.toLowerCase());
+        (q.topic && q.topic.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (q.subject && q.subject.toLowerCase().includes(searchQuery.toLowerCase()));
       const matchSubject = selectedSubject === 'ALL' || q.subject === selectedSubject;
       const matchYear = selectedYear === 'ALL' || q.yearLevel === selectedYear;
       return matchSearch && matchSubject && matchYear;
@@ -184,13 +184,28 @@ export const QuizLibrary: React.FC<QuizLibraryProps> = ({
               className="bg-white border-2 border-slate-200 hover:border-amber-400 rounded-2xl p-5 flex flex-col justify-between transition-all hover:shadow-lg group"
             >
               <div className="space-y-2.5">
-                {/* Subject & Year header metadata */}
-                <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
-                  <span className="text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                    {quiz.subject}
-                  </span>
-                  <span aria-hidden="true">&bull;</span>
-                  <span>{quiz.yearLevel}</span>
+                {/* Subject & Year header metadata or Private badge */}
+                <div className="flex flex-wrap items-center gap-1.5 text-xs font-bold text-slate-500">
+                  {quiz.isPrivate ? (
+                    <span className="text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-300 flex items-center gap-1">
+                      <span>🔒</span>
+                      <span>Peribadi {quiz.userEmail ? `(${quiz.userEmail})` : ''}</span>
+                    </span>
+                  ) : quiz.subject ? (
+                    <span className="text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                      {quiz.subject}
+                    </span>
+                  ) : (
+                    <span className="text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                      Kuiz
+                    </span>
+                  )}
+                  {quiz.yearLevel && (
+                    <>
+                      <span aria-hidden="true">&bull;</span>
+                      <span>{quiz.yearLevel}</span>
+                    </>
+                  )}
                   <span aria-hidden="true">&bull;</span>
                   <span>{quiz.language}</span>
                 </div>
@@ -278,7 +293,9 @@ export const QuizLibrary: React.FC<QuizLibraryProps> = ({
               <div>
                 <h3 className="text-base font-extrabold text-slate-900">{previewQuiz.title}</h3>
                 <span className="text-xs text-slate-500 font-medium">
-                  {previewQuiz.subject} &bull; {previewQuiz.yearLevel} &bull; {previewQuiz.questions.length} Soalan
+                  {previewQuiz.isPrivate ? '🔒 Kuiz Peribadi • ' : previewQuiz.subject ? `${previewQuiz.subject} • ` : ''}
+                  {previewQuiz.yearLevel ? `${previewQuiz.yearLevel} • ` : ''}
+                  {previewQuiz.questions.length} Soalan
                 </span>
               </div>
               <button

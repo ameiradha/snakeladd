@@ -117,7 +117,7 @@ export const ActiveGameScreen: React.FC<ActiveGameScreenProps> = ({
         id: `game_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
         date: new Date().toISOString(),
         quizTitle: quiz.title,
-        quizSubject: quiz.subject,
+        quizSubject: quiz.subject || 'Kuiz',
         teams: sortedTeams.map((t) => ({
           name: t.name,
           color: t.color,

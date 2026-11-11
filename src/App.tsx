@@ -3,6 +3,17 @@ import { Quiz, Team, GameSettings, GameRecord, Question } from './types';
 import { dbService, defaultSettings } from './services/db';
 import { DEFAULT_TEAMS } from './game/constants';
 import { soundManager } from './services/sound';
+import {
+  auth,
+  loginWithGoogle,
+  logoutUser,
+  subscribeToAuth,
+  getUserQuizzes,
+  saveUserQuiz,
+  deleteUserQuiz,
+  testFirestoreConnection,
+} from './services/firebaseService';
+import type { User as FirebaseUser } from 'firebase/auth';
 import { Header } from './components/Header';
 import { Dashboard } from './components/Dashboard';
 import { GameSetupScreen } from './components/GameSetupScreen';
@@ -32,6 +43,9 @@ export default function App() {
   const [teams, setTeams] = useState<Team[]>(DEFAULT_TEAMS);
   const [selectedQuizId, setSelectedQuizId] = useState<string | null>(null);
 
+  // Authenticated user state
+  const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
+
   // Active game specific state
   const [activeGameQuiz, setActiveGameQuiz] = useState<Quiz | null>(null);
 
@@ -43,31 +57,88 @@ export default function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
 
-  // Load from IndexedDB
-  const refreshAllData = async () => {
+  // Load quizzes (combines local built-in quizzes and private quizzes of logged-in user)
+  const refreshAllData = async (userParam?: FirebaseUser | null) => {
     try {
-      const [allQuizzes, allHistory, savedSettings] = await Promise.all([
+      const activeUser = userParam !== undefined ? userParam : currentUser;
+      const [localQuizzes, allHistory, savedSettings] = await Promise.all([
         dbService.getAllQuizzes(),
         dbService.getGameHistory(),
         dbService.getSettings(),
       ]);
-      setQuizzes(allQuizzes);
+
+      let userPrivateQuizzes: Quiz[] = [];
+      if (activeUser) {
+        try {
+          userPrivateQuizzes = await getUserQuizzes(activeUser);
+        } catch (cloudErr) {
+          console.warn('Could not load user private quizzes from Firestore:', cloudErr);
+        }
+      }
+
+      // Filter local quizzes: only show public default quizzes or quizzes belonging to current user
+      const filteredLocal = localQuizzes.filter((q) => {
+        if (!q.isPrivate && !q.userId) return true; // public built-in template
+        if (activeUser && (q.userId === activeUser.uid || q.userEmail === activeUser.email)) {
+          return true; // owned by this logged-in user
+        }
+        return false; // hide private quizzes from other users
+      });
+
+      // Merge and deduplicate by quiz id
+      const quizMap = new Map<string, Quiz>();
+      userPrivateQuizzes.forEach((q) => quizMap.set(q.id, { ...q, isPrivate: true }));
+      filteredLocal.forEach((q) => {
+        if (!quizMap.has(q.id)) {
+          quizMap.set(q.id, q);
+        }
+      });
+
+      const combinedQuizzes = Array.from(quizMap.values());
+      combinedQuizzes.sort((a, b) => b.updatedAt - a.updatedAt);
+
+      setQuizzes(combinedQuizzes);
       setHistory(allHistory);
       setSettings(savedSettings);
       soundManager.setEnabled(savedSettings.soundEnabled);
-      if (allQuizzes.length > 0 && !selectedQuizId) {
-        setSelectedQuizId(allQuizzes[0].id);
+      if (combinedQuizzes.length > 0 && !selectedQuizId) {
+        setSelectedQuizId(combinedQuizzes[0].id);
       }
     } catch (err) {
-      console.error('Error loading data from IndexedDB:', err);
+      console.error('Error loading data:', err);
     } finally {
       setIsLoadingData(false);
     }
   };
 
   useEffect(() => {
-    refreshAllData();
+    testFirestoreConnection();
+    const unsubscribe = subscribeToAuth((user) => {
+      setCurrentUser(user);
+      refreshAllData(user);
+    });
+    return () => unsubscribe();
   }, []);
+
+  const handleLogin = async () => {
+    try {
+      const logged = await loginWithGoogle();
+      setCurrentUser(logged);
+      await refreshAllData(logged);
+    } catch (err: any) {
+      alert('Gagal log masuk: ' + (err.message || String(err)));
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+      setCurrentUser(null);
+      await refreshAllData(null);
+    } catch (err: any) {
+      alert('Gagal log keluar: ' + (err.message || String(err)));
+    }
+  };
 
   // Quick Start Handler
   const handleQuickStart = () => {
@@ -99,13 +170,34 @@ export default function App() {
 
   // Quiz CRUD Handlers
   const handleSaveQuiz = async (quiz: Quiz) => {
-    await dbService.saveQuiz(quiz);
+    const quizWithAuth: Quiz = {
+      ...quiz,
+      userId: quiz.userId || currentUser?.uid,
+      userEmail: quiz.userEmail || currentUser?.email || undefined,
+    };
+
+    if (currentUser) {
+      try {
+        await saveUserQuiz(quizWithAuth, currentUser);
+      } catch (err) {
+        console.warn('Failed to save quiz to Firestore:', err);
+      }
+    }
+
+    await dbService.saveQuiz(quizWithAuth);
     await refreshAllData();
     setEditingQuiz(null);
     setCurrentView('quiz_library');
   };
 
   const handleDeleteQuiz = async (quizId: string) => {
+    if (currentUser) {
+      try {
+        await deleteUserQuiz(quizId, currentUser);
+      } catch (err) {
+        console.warn('Failed to delete quiz from Firestore:', err);
+      }
+    }
     await dbService.deleteQuiz(quizId);
     await refreshAllData();
   };
@@ -115,9 +207,19 @@ export default function App() {
       ...quiz,
       id: `quiz_copy_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
       title: `${quiz.title} (Copy)`,
+      userId: currentUser?.uid,
+      userEmail: currentUser?.email || undefined,
+      isPrivate: true,
       createdAt: Date.now(),
       updatedAt: Date.now(),
     };
+    if (currentUser) {
+      try {
+        await saveUserQuiz(duplicate, currentUser);
+      } catch (err) {
+        console.warn('Failed to save duplicate quiz to Firestore:', err);
+      }
+    }
     await dbService.saveQuiz(duplicate);
     await refreshAllData();
   };
@@ -134,7 +236,17 @@ export default function App() {
       questions: importedQuestions,
       createdAt: Date.now(),
       updatedAt: Date.now(),
+      userId: currentUser?.uid,
+      userEmail: currentUser?.email || undefined,
+      isPrivate: Boolean(currentUser),
     };
+    if (currentUser) {
+      try {
+        await saveUserQuiz(newQuiz, currentUser);
+      } catch (err) {
+        console.warn('Failed to save imported quiz to Firestore:', err);
+      }
+    }
     await dbService.saveQuiz(newQuiz);
     await refreshAllData();
     setIsTextImporterOpen(false);
@@ -143,10 +255,25 @@ export default function App() {
   };
 
   const handleSaveAIGeneratedQuiz = async (newQuiz: Quiz) => {
-    await dbService.saveQuiz(newQuiz);
+    const privateQuiz: Quiz = {
+      ...newQuiz,
+      userId: currentUser?.uid,
+      userEmail: currentUser?.email || undefined,
+      isPrivate: true, // Always private as requested
+    };
+
+    if (currentUser) {
+      try {
+        await saveUserQuiz(privateQuiz, currentUser);
+      } catch (err) {
+        console.warn('Failed to save AI quiz to Firestore:', err);
+      }
+    }
+
+    await dbService.saveQuiz(privateQuiz);
     await refreshAllData();
     setIsAIGeneratorOpen(false);
-    setSelectedQuizId(newQuiz.id);
+    setSelectedQuizId(privateQuiz.id);
     setCurrentView('quiz_library');
   };
 
@@ -218,6 +345,9 @@ export default function App() {
         onToggleClassroomMode={handleToggleClassroomMode}
         language={settings.language}
         onToggleLanguage={handleToggleLanguage}
+        user={currentUser}
+        onLogin={handleLogin}
+        onLogout={handleLogout}
       />
 
       {/* Main View Router */}
@@ -327,6 +457,7 @@ export default function App() {
         <AIQuizGenerator
           onSaveQuiz={handleSaveAIGeneratedQuiz}
           onCancel={() => setIsAIGeneratorOpen(false)}
+          currentUserEmail={currentUser?.email}
         />
       )}
 

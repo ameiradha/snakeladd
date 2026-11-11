@@ -8,9 +8,10 @@ export interface AIStatusResponse {
 
 export interface GenerateQuizParams {
   promptDescription?: string;
-  subject: string;
-  yearLevel: string;
-  topic: string;
+  title?: string;
+  subject?: string;
+  yearLevel?: string;
+  topic?: string;
   language: 'en' | 'ms' | 'English' | 'Bahasa Melayu';
   count: number;
   difficulty: 'Easy' | 'Medium' | 'Hard' | 'Mixed';
@@ -23,13 +24,14 @@ export interface GenerateQuizParams {
 export interface GenerateQuizResult {
   success: boolean;
   title: string;
-  subject: string;
-  yearLevel: string;
-  topic: string;
+  subject?: string;
+  yearLevel?: string;
+  topic?: string;
   language: string;
   questions: Question[];
   meta: {
     count: number;
+    model?: string;
     generatedAt: string;
   };
 }
