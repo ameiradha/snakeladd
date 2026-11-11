@@ -32,10 +32,9 @@ export default async function handler(req: any, res: any) {
   } = req.body || {};
 
   const numQuestions = Math.min(Math.max(parseInt(count, 10) || 10, 1), 30);
-  const targetLanguage =
-    language === 'ms' || String(language).toLowerCase().includes('malay')
-      ? 'Bahasa Melayu'
-      : 'English';
+  const langLower = String(language || '').toLowerCase();
+  const isMalay = langLower === 'ms' || langLower.includes('melayu') || langLower.includes('malay') || langLower.includes('bahasa');
+  const targetLanguage = isMalay ? 'Bahasa Melayu' : 'English';
 
   try {
     const ai = new GoogleGenAI({
@@ -50,21 +49,22 @@ export default async function handler(req: any, res: any) {
     const userInstructions = promptDescription || title || topic || subject || 'General Knowledge';
     const systemInstruction = `You are an expert quiz designer and teacher.
 Generate a structured quiz suitable for classroom board games (Snake & Ladder Quiz Arena).
-Language: ${targetLanguage}.
+Target Language: ${targetLanguage}.
 Difficulty requested: ${difficulty}.
 Questions requested: ${numQuestions}.
 Question format requested: ${questionType}.
 Teacher instructions & context: "${userInstructions}".
 
-Rules:
-1. Every question must be engaging, clear, age-appropriate, and strictly factually accurate.
-2. For MCQ: provide 4 distinct, unambiguous options with labels A, B, C, D. Specify the correct letter (e.g. "B") in correctAnswer.
-3. For TRUE_FALSE: correctAnswer must be strictly either "TRUE" or "FALSE".
-4. For SHORT_ANSWER: correctAnswer must be a concise answer (1-3 words). Provide common synonyms or alternative accepted spellings in acceptedAnswers ${includeAlternatives ? 'when applicable' : ''}.
-5. ${includeExplanations ? 'Provide a clear, educational explanation for why the answer is correct.' : 'Provide a short explanation.'}
-6. Ensure all UTF-8 characters and accented Malay words are preserved cleanly.`;
+CRITICAL LANGUAGE MANDATE:
+1. All question text, option text, explanations, and accepted answers MUST be written 100% strictly in ${targetLanguage}.
+2. If Target Language is "Bahasa Melayu", DO NOT output English text for questions, options, or explanations under any circumstances.
+3. For MCQ: provide 4 distinct, unambiguous options with labels A, B, C, D. Specify the correct letter (e.g. "B") in correctAnswer.
+4. For TRUE_FALSE: correctAnswer must be strictly either "TRUE" or "FALSE".
+5. For SHORT_ANSWER: correctAnswer must be a concise answer (1-3 words in ${targetLanguage}). Provide common synonyms in ${targetLanguage} in acceptedAnswers ${includeAlternatives ? 'when applicable' : ''}.
+6. ${includeExplanations ? `Provide a clear, educational explanation in ${targetLanguage} for why the answer is correct.` : `Provide a short explanation in ${targetLanguage}.`}
+7. Ensure all UTF-8 characters and Malay words are formatted cleanly.`;
 
-    const userPrompt = `Please generate ${numQuestions} educational questions based on: "${userInstructions}".
+    const userPrompt = `Please generate ${numQuestions} educational questions strictly in ${targetLanguage} based on: "${userInstructions}".
 Language: ${targetLanguage}.
 Question Type: ${questionType}.
 Difficulty: ${difficulty}.`;
