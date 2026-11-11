@@ -388,19 +388,6 @@ export const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onC
                 </div>
               )}
 
-              {/* Explanation */}
-              <div>
-                <label className="text-xs font-bold text-slate-600 block mb-1">
-                  Penerangan Jawapan (Pedagogical Explanation):
-                </label>
-                <input
-                  type="text"
-                  value={q.explanation}
-                  onChange={(e) => handleUpdateQuestion(idx, { explanation: e.target.value })}
-                  placeholder="Mengapa jawapan ini betul untuk penerangan murid..."
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs text-slate-700 font-medium focus:outline-none focus:border-amber-500 focus:bg-white"
-                />
-              </div>
             </div>
           ))}
         </div>

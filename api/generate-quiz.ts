@@ -55,16 +55,16 @@ Questions requested: ${numQuestions}.
 Question format requested: ${questionType}.
 Teacher instructions & context: "${userInstructions}".
 
-CRITICAL LANGUAGE MANDATE:
-1. All question text, option text, explanations, and accepted answers MUST be written 100% strictly in ${targetLanguage}.
-2. If Target Language is "Bahasa Melayu", DO NOT output English text for questions, options, or explanations under any circumstances.
-3. For MCQ: provide 4 distinct, unambiguous options with labels A, B, C, D. Specify the correct letter (e.g. "B") in correctAnswer.
-4. For TRUE_FALSE: correctAnswer must be strictly either "TRUE" or "FALSE".
-5. For SHORT_ANSWER: correctAnswer must be a concise answer (1-3 words in ${targetLanguage}). Provide common synonyms in ${targetLanguage} in acceptedAnswers ${includeAlternatives ? 'when applicable' : ''}.
-6. ${includeExplanations ? `Provide a clear, educational explanation in ${targetLanguage} for why the answer is correct.` : `Provide a short explanation in ${targetLanguage}.`}
+CRITICAL LANGUAGE & CONTENT MANDATE:
+1. All question text, option text, and accepted answers MUST be written 100% strictly in ${targetLanguage}.
+2. If Target Language is "Bahasa Melayu", DO NOT output English text for questions or options under any circumstances.
+3. DO NOT generate any answer explanation under any circumstances. Always set the explanation field to an empty string "".
+4. For MCQ: provide 4 distinct, unambiguous options with labels A, B, C, D. Specify the correct letter (e.g. "B") in correctAnswer.
+5. For TRUE_FALSE: correctAnswer must be strictly either "TRUE" or "FALSE".
+6. For SHORT_ANSWER: correctAnswer must be a concise answer (1-3 words in ${targetLanguage}). Provide common synonyms in ${targetLanguage} in acceptedAnswers ${includeAlternatives ? 'when applicable' : ''}.
 7. Ensure all UTF-8 characters and Malay words are formatted cleanly.`;
 
-    const userPrompt = `Please generate ${numQuestions} educational questions strictly in ${targetLanguage} based on: "${userInstructions}".
+    const userPrompt = `Please generate ${numQuestions} educational questions strictly in ${targetLanguage} based on: "${userInstructions}". Do not include any answer explanations.
 Language: ${targetLanguage}.
 Question Type: ${questionType}.
 Difficulty: ${difficulty}.`;
@@ -212,7 +212,7 @@ Difficulty: ${difficulty}.`;
         acceptedAnswers: Array.isArray(q.acceptedAnswers)
           ? q.acceptedAnswers.map((a: any) => String(a).trim()).filter(Boolean)
           : [],
-        explanation: String(q.explanation || 'No explanation provided.').trim(),
+        explanation: '',
         difficulty: ['Easy', 'Medium', 'Hard'].includes(q.difficulty)
           ? q.difficulty
           : difficulty === 'Mixed'

@@ -3,6 +3,8 @@ import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
   User as FirebaseUser,
@@ -75,21 +77,57 @@ export async function testFirestoreConnection(): Promise<void> {
 
 // User Authentication
 export async function loginWithGoogle(): Promise<FirebaseUser> {
-  const provider = new GoogleAuthProvider();
-  provider.setCustomParameters({ prompt: 'select_account' });
-  const result = await signInWithPopup(auth, provider);
-  const user = result.user;
+  try {
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+    const result = await signInWithPopup(auth, provider);
+    const user = result.user;
 
-  // Sync user profile to Firestore
+    // Sync user profile to Firestore
+    try {
+      const userRef = doc(db, 'users', user.uid);
+      await setDoc(
+        userRef,
+        {
+          uid: user.uid,
+          email: user.email || '',
+          displayName: user.displayName || '',
+          photoURL: user.photoURL || '',
+          lastLogin: new Date().toISOString(),
+        },
+        { merge: true }
+      );
+    } catch (error) {
+      console.warn('Could not update user profile doc:', error);
+    }
+
+    return user;
+  } catch (err: any) {
+    console.error('Google login error:', err);
+    if (err?.code === 'auth/popup-closed-by-user') {
+      throw new Error(
+        'Tab popup Google telah ditutup oleh pelayar atau pengguna. Sekiranya anda menggunakan iframe / pelayar disekat popup, sila gunakan log masuk Emel.'
+      );
+    }
+    if (err?.code === 'auth/unauthorized-domain') {
+      throw new Error(
+        `Domain ini (${window.location.hostname}) belum didaftarkan dalam Firebase Console > Authentication > Settings > Authorized domains.`
+      );
+    }
+    throw err;
+  }
+}
+
+export async function loginWithEmail(email: string, pass: string): Promise<FirebaseUser> {
+  const result = await signInWithEmailAndPassword(auth, email, pass);
+  const user = result.user;
   try {
     const userRef = doc(db, 'users', user.uid);
     await setDoc(
       userRef,
       {
         uid: user.uid,
-        email: user.email || '',
-        displayName: user.displayName || '',
-        photoURL: user.photoURL || '',
+        email: user.email || email,
         lastLogin: new Date().toISOString(),
       },
       { merge: true }
@@ -97,7 +135,27 @@ export async function loginWithGoogle(): Promise<FirebaseUser> {
   } catch (error) {
     console.warn('Could not update user profile doc:', error);
   }
+  return user;
+}
 
+export async function registerWithEmail(email: string, pass: string): Promise<FirebaseUser> {
+  const result = await createUserWithEmailAndPassword(auth, email, pass);
+  const user = result.user;
+  try {
+    const userRef = doc(db, 'users', user.uid);
+    await setDoc(
+      userRef,
+      {
+        uid: user.uid,
+        email: user.email || email,
+        createdAt: new Date().toISOString(),
+        lastLogin: new Date().toISOString(),
+      },
+      { merge: true }
+    );
+  } catch (error) {
+    console.warn('Could not update user profile doc:', error);
+  }
   return user;
 }
 

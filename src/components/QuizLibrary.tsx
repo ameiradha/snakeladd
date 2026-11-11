@@ -338,11 +338,7 @@ export const QuizLibrary: React.FC<QuizLibraryProps> = ({
                     <span className="font-black text-emerald-700">{q.correctAnswer}</span>
                   </div>
 
-                  {q.explanation && (
-                    <p className="text-xs text-slate-600 italic bg-white p-2.5 rounded-xl border border-slate-200">
-                      {q.explanation}
-                    </p>
-                  )}
+
                 </div>
               ))}
             </div>

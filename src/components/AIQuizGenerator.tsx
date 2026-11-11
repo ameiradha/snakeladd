@@ -87,7 +87,7 @@ export const AIQuizGenerator: React.FC<AIQuizGeneratorProps> = ({
         count,
         difficulty,
         questionType,
-        includeExplanations,
+        includeExplanations: false,
         includeAlternatives,
       });
 
@@ -295,15 +295,6 @@ export const AIQuizGenerator: React.FC<AIQuizGeneratorProps> = ({
                 <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
                   <input
                     type="checkbox"
-                    checked={includeExplanations}
-                    onChange={(e) => setIncludeExplanations(e.target.checked)}
-                    className="w-4 h-4 rounded text-amber-500 accent-amber-500"
-                  />
-                  <span>Sertakan penerangan jawapan pembelajaran</span>
-                </label>
-                <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
-                  <input
-                    type="checkbox"
                     checked={includeAlternatives}
                     onChange={(e) => setIncludeAlternatives(e.target.checked)}
                     className="w-4 h-4 rounded text-amber-500 accent-amber-500"
@@ -400,24 +391,15 @@ export const AIQuizGenerator: React.FC<AIQuizGeneratorProps> = ({
                       </div>
                     )}
 
-                    {/* Correct Answer & Explanation */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 text-xs">
+                    {/* Correct Answer */}
+                    <div className="pt-1 text-xs">
                       <div>
                         <span className="text-slate-600 font-bold block mb-0.5">Jawapan Betul:</span>
                         <input
                           type="text"
                           value={q.correctAnswer}
-                          onChange={(e) => handleUpdateQuestion(qIndex, { correctAnswer: e.target.value })}
-                          className="w-full bg-white border border-slate-300 rounded px-2.5 py-1 text-emerald-700 font-black focus:outline-none focus:border-amber-500"
-                        />
-                      </div>
-                      <div>
-                        <span className="text-slate-600 font-bold block mb-0.5">Penerangan:</span>
-                        <input
-                          type="text"
-                          value={q.explanation}
-                          onChange={(e) => handleUpdateQuestion(qIndex, { explanation: e.target.value })}
-                          className="w-full bg-white border border-slate-300 rounded px-2.5 py-1 text-slate-700 font-medium focus:outline-none focus:border-amber-500"
+                          onChange={(e) => handleUpdateQuestion(qIndex, { correctAnswer: e.target.value, explanation: '' })}
+                          className="w-full sm:w-1/2 bg-white border border-slate-300 rounded px-2.5 py-1 text-emerald-700 font-black focus:outline-none focus:border-amber-500"
                         />
                       </div>
                     </div>

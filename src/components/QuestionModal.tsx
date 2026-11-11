@@ -249,19 +249,6 @@ export const QuestionModal: React.FC<QuestionModalProps> = ({
                 </div>
               </div>
 
-              {/* Explanation Box */}
-              {question.explanation && (
-                <div className="p-5 sm:p-6 bg-slate-50 rounded-2xl border-2 border-slate-200">
-                  <div className="flex items-center gap-2 text-xs font-black text-amber-800 uppercase tracking-wider mb-2">
-                    <Sparkles className="w-4 h-4 text-amber-600" />
-                    <span>Penerangan Guru</span>
-                  </div>
-                  <p className="text-base sm:text-lg font-medium text-slate-800 leading-relaxed">
-                    {question.explanation}
-                  </p>
-                </div>
-              )}
-
               {/* Movement Preview */}
               <div className="p-4 bg-amber-50 rounded-2xl border border-amber-300 flex items-center justify-between text-sm sm:text-base">
                 <span className="text-slate-600 font-bold">Tindakan Selepas Ini:</span>
