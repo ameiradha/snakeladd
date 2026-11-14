@@ -31,22 +31,22 @@ export const Header: React.FC<HeaderProps> = ({
   // Classroom Mode top bar
   if (isClassroomMode) {
     return (
-      <header className="flex items-center justify-between px-4 py-2 bg-white/95 border-b-2 border-slate-200 shadow-xs z-30">
-        <div className="flex items-center gap-2">
-          <span className="text-base font-black text-amber-600 tracking-tight flex items-center gap-1.5">
+      <header className="shrink-0 flex items-center justify-between px-3 sm:px-4 py-1.5 bg-white/95 border-b-2 border-slate-200 shadow-xs z-30">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-sm sm:text-base font-black text-amber-600 tracking-tight flex items-center gap-1.5 whitespace-nowrap">
             <span>🐍</span>
             <span>SNAKE LADD</span>
           </span>
-          <span className="text-xs font-semibold text-slate-500 hidden sm:inline">
+          <span className="text-xs font-semibold text-slate-500 hidden sm:inline truncate">
             &bull; Mod Tayangan Projektor Bilik Darjah
           </span>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 shrink-0">
           <button
             type="button"
             onClick={onToggleClassroomMode}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition cursor-pointer"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition cursor-pointer whitespace-nowrap"
           >
             <Minimize className="w-3.5 h-3.5 text-amber-600" />
             <span>Keluar Mod Projektor</span>
@@ -56,22 +56,28 @@ export const Header: React.FC<HeaderProps> = ({
     );
   }
 
+  const isGameView = currentView === 'active_game';
+
   return (
-    <header className="flex items-center justify-between gap-8 px-6 py-3 border-b-2 border-slate-200 bg-white/95 backdrop-blur-md sticky top-0 z-40 shadow-xs">
+    <header
+      className={`shrink-0 flex items-center justify-between gap-2 sm:gap-4 lg:gap-8 px-3 sm:px-5 ${
+        isGameView ? 'py-1.5 sm:py-2' : 'py-2.5 sm:py-3'
+      } border-b-2 border-slate-200 bg-white/95 backdrop-blur-md sticky top-0 z-40 shadow-xs`}
+    >
       {/* Zone 1: Single text wordmark */}
       <button
         type="button"
         onClick={() => onNavigate('dashboard')}
-        className="text-lg font-black tracking-tight text-slate-900 hover:text-amber-600 transition-colors whitespace-nowrap shrink-0 flex items-center gap-2 cursor-pointer"
+        className="text-base sm:text-lg font-black tracking-tight text-slate-900 hover:text-amber-600 transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 sm:gap-2 cursor-pointer"
       >
-        <span className="text-2xl">🐍</span>
-        <span className="bg-gradient-to-r from-emerald-600 via-amber-600 to-amber-500 bg-clip-text text-transparent font-black text-xl">
+        <span className="text-xl sm:text-2xl">🐍</span>
+        <span className="bg-gradient-to-r from-emerald-600 via-amber-600 to-amber-500 bg-clip-text text-transparent font-black text-base sm:text-xl">
           Snake Ladd
         </span>
       </button>
 
       {/* Zone 2: 4-5 concise single-line nav links */}
-      <nav className="hidden md:flex items-center gap-6 text-sm font-bold text-slate-600">
+      <nav className="hidden md:flex items-center gap-4 lg:gap-6 text-sm font-bold text-slate-600">
         <button
           type="button"
           onClick={() => onNavigate('dashboard')}
@@ -111,14 +117,14 @@ export const Header: React.FC<HeaderProps> = ({
       </nav>
 
       {/* Zone 3: 1 primary action + minimal secondary controls */}
-      <div className="flex items-center gap-2.5 shrink-0">
-        <PWAInstallButton />
+      <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+        {!isGameView && <PWAInstallButton />}
 
         <button
           type="button"
           onClick={onToggleLanguage}
           title="Tukar bahasa"
-          className="flex items-center gap-1 px-3 py-1.5 rounded-xl border-2 border-slate-200 bg-slate-50 text-xs font-bold text-slate-800 hover:bg-slate-100 cursor-pointer transition whitespace-nowrap shrink-0"
+          className="flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-xl border-2 border-slate-200 bg-slate-50 text-xs font-bold text-slate-800 hover:bg-slate-100 cursor-pointer transition whitespace-nowrap shrink-0"
         >
           <Languages className="w-3.5 h-3.5 text-amber-600" />
           <span>{language === 'en' ? 'BM' : 'EN'}</span>
@@ -128,24 +134,24 @@ export const Header: React.FC<HeaderProps> = ({
           type="button"
           onClick={onToggleClassroomMode}
           title="Mod Projektor Skrin Penuh"
-          className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border-2 border-slate-200 bg-slate-50 text-xs font-bold text-slate-800 hover:bg-slate-100 cursor-pointer transition whitespace-nowrap shrink-0"
+          className="hidden sm:flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border-2 border-slate-200 bg-slate-50 text-xs font-bold text-slate-800 hover:bg-slate-100 cursor-pointer transition whitespace-nowrap shrink-0"
         >
           <Maximize className="w-3.5 h-3.5 text-amber-600" />
-          <span>Mod Projektor</span>
+          <span className="hidden lg:inline">Mod Projektor</span>
         </button>
 
         {/* User Account / Email Status */}
         {user ? (
-          <div className="flex items-center gap-2 pl-1 border-l border-slate-200">
+          <div className="flex items-center gap-1 sm:gap-2 pl-1 border-l border-slate-200">
             <div
-              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-xl text-xs font-bold text-slate-800 border border-slate-300 max-w-[170px] truncate"
+              className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 sm:py-1.5 bg-slate-100 hover:bg-slate-200 rounded-xl text-xs font-bold text-slate-800 border border-slate-300 max-w-[110px] sm:max-w-[170px] truncate"
               title={`Log masuk sebagai: ${user.email}`}
             >
               {user.photoURL ? (
                 <img
                   src={user.photoURL}
                   alt={user.displayName || 'User'}
-                  className="w-4 h-4 rounded-full"
+                  className="w-4 h-4 rounded-full shrink-0"
                 />
               ) : (
                 <UserIcon className="w-3.5 h-3.5 text-amber-600 shrink-0" />
@@ -169,22 +175,24 @@ export const Header: React.FC<HeaderProps> = ({
               type="button"
               onClick={onLogin}
               title="Log Masuk dengan Google/Email untuk simpan soalan peribadi"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border-2 border-emerald-300 bg-emerald-50 text-xs font-bold text-emerald-800 hover:bg-emerald-100 cursor-pointer transition whitespace-nowrap shrink-0"
+              className="flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-xl border-2 border-emerald-300 bg-emerald-50 text-xs font-bold text-emerald-800 hover:bg-emerald-100 cursor-pointer transition whitespace-nowrap shrink-0"
             >
               <LogIn className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Log Masuk</span>
+              <span className="hidden xs:inline sm:inline">Log Masuk</span>
             </button>
           )
         )}
 
-        <button
-          type="button"
-          onClick={onQuickStart}
-          className="px-4 py-2 text-xs sm:text-sm font-black text-slate-950 bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 rounded-xl shadow-md transition active:scale-95 whitespace-nowrap shrink-0 cursor-pointer flex items-center gap-1.5 ring-2 ring-amber-400/80"
-        >
-          <Play className="w-3.5 h-3.5 fill-current" />
-          <span>Main Segera</span>
-        </button>
+        {!isGameView && (
+          <button
+            type="button"
+            onClick={onQuickStart}
+            className="px-2.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-black text-slate-950 bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 rounded-xl shadow-md transition active:scale-95 whitespace-nowrap shrink-0 cursor-pointer flex items-center gap-1.5 ring-2 ring-amber-400/80"
+          >
+            <Play className="w-3.5 h-3.5 fill-current" />
+            <span>Main Segera</span>
+          </button>
+        )}
       </div>
     </header>
   );

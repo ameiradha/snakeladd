@@ -326,9 +326,13 @@ export default function App() {
     );
   }
 
+  const isActiveGame = currentView === 'active_game';
+
   return (
     <div
-      className={`min-h-screen flex flex-col bg-slate-100 text-slate-900 ${
+      className={`${
+        isActiveGame ? 'h-[100dvh] overflow-hidden' : 'min-h-screen'
+      } flex flex-col bg-slate-100 text-slate-900 ${
         settings.reducedMotion ? 'motion-reduce' : ''
       }`}
     >
@@ -347,7 +351,7 @@ export default function App() {
       />
 
       {/* Main View Router */}
-      <main className="flex-1">
+      <main className={isActiveGame ? 'flex-1 min-h-0 overflow-hidden' : 'flex-1'}>
         {currentView === 'dashboard' && (
           <Dashboard
             quizzes={quizzes}

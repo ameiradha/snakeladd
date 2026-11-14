@@ -93,9 +93,9 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     const updateSize = () => {
       const { clientWidth, clientHeight } = container;
       if (clientWidth > 0 && clientHeight > 0) {
-        // Compute strict square that fits within both available width and height
-        const available = Math.min(clientWidth, clientHeight);
-        setBoardSize(Math.floor(available));
+        // Compute strict square that fits within available width and height with a 2px safety margin
+        const available = Math.max(160, Math.floor(Math.min(clientWidth, clientHeight)) - 2);
+        setBoardSize(available);
       }
     };
 
@@ -116,17 +116,30 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     };
   }, []);
 
+  const isMiniBoard = boardSize !== null && boardSize < 460;
+  const isCompactBoard = boardSize !== null && boardSize >= 460 && boardSize < 680;
+
   return (
     <div
       ref={containerRef}
-      className="w-full h-full flex items-center justify-center min-h-0 min-w-0 overflow-hidden p-1"
+      className="w-full h-full flex items-center justify-center min-h-0 min-w-0 overflow-hidden"
     >
       <div
         style={boardSize ? { width: `${boardSize}px`, height: `${boardSize}px` } : undefined}
-        className="relative max-w-full max-h-full aspect-square select-none rounded-3xl p-1.5 sm:p-2.5 bg-white border-2 border-slate-200 shadow-xl flex flex-col justify-center"
+        className={`relative max-w-full max-h-full aspect-square select-none bg-white border-2 border-slate-200 shadow-xl flex flex-col justify-center ${
+          isMiniBoard ? 'rounded-xl p-1' : isCompactBoard ? 'rounded-2xl p-1.5' : 'rounded-3xl p-2'
+        }`}
       >
-        {/* 10x10 Grid container */}
-        <div className="relative w-full h-full grid grid-cols-10 grid-rows-10 rounded-2xl overflow-hidden border-2 border-slate-300 bg-white shadow-inner">
+        {/* 10x10 Grid container with strict minmax(0, 1fr) tracks */}
+        <div
+          style={{
+            gridTemplateColumns: 'repeat(10, minmax(0, 1fr))',
+            gridTemplateRows: 'repeat(10, minmax(0, 1fr))',
+          }}
+          className={`relative w-full h-full grid overflow-hidden border-2 border-slate-300 bg-white shadow-inner ${
+            isMiniBoard ? 'rounded-lg' : 'rounded-2xl'
+          }`}
+        >
         {squares.map(({ num, row, col }) => {
           const squareTeams = teamsBySquare.get(num) || [];
           const hasLadderStart = LADDERS.find((l) => l.start === num);
@@ -152,32 +165,40 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                 gridRowStart: row + 1,
                 gridColumnStart: col + 1,
               }}
-              className={`relative flex flex-col justify-between p-1 sm:p-1.5 border transition-all cursor-pointer ${
+              className={`relative min-w-0 min-h-0 overflow-hidden flex flex-col justify-between ${
+                isMiniBoard ? 'p-0.5' : isCompactBoard ? 'p-0.5 sm:p-1' : 'p-1 sm:p-1.5'
+              } border transition-all cursor-pointer ${
                 isEncounterFrom
-                  ? 'bg-rose-200 border-4 border-rose-600 ring-4 ring-rose-400 z-30 scale-105 shadow-xl animate-pulse'
+                  ? 'bg-rose-200 border-2 sm:border-4 border-rose-600 ring-2 sm:ring-4 ring-rose-400 z-30 scale-105 shadow-xl animate-pulse'
                   : isEncounterTo
-                  ? 'bg-emerald-200 border-4 border-emerald-600 ring-4 ring-emerald-400 z-30 scale-105 shadow-xl animate-pulse'
+                  ? 'bg-emerald-200 border-2 sm:border-4 border-emerald-600 ring-2 sm:ring-4 ring-emerald-400 z-30 scale-105 shadow-xl animate-pulse'
                   : isFinish
                   ? 'bg-gradient-to-br from-amber-200 via-yellow-100 to-amber-200 border-2 border-amber-400 font-black'
                   : isStart
                   ? 'bg-gradient-to-br from-emerald-200 via-teal-100 to-emerald-200 border-2 border-emerald-400 font-black'
                   : hasSnakeStart
-                  ? 'bg-rose-100/90 border-2 border-rose-500 shadow-xs'
+                  ? 'bg-rose-100/90 border-rose-500 shadow-xs'
                   : hasLadderStart
-                  ? 'bg-amber-100/90 border-2 border-amber-500 shadow-xs'
+                  ? 'bg-amber-100/90 border-amber-500 shadow-xs'
                   : hasSnakeEnd
-                  ? 'bg-emerald-50/80 border-dashed border-2 border-emerald-400'
+                  ? 'bg-emerald-50/80 border-dashed border-emerald-400'
                   : hasLadderEnd
-                  ? 'bg-yellow-50/80 border-dashed border-2 border-amber-400'
+                  ? 'bg-yellow-50/80 border-dashed border-amber-400'
                   : isAlternate
                   ? 'bg-sky-50/50 border-slate-200'
                   : 'bg-white border-slate-200'
               }`}
             >
               {/* Square Header: Number + Endpoint Badge */}
-              <div className="flex items-center justify-between z-10 pointer-events-none">
+              <div className="flex items-center justify-between gap-0.5 z-10 pointer-events-none shrink-0">
                 <span
-                  className={`text-xs sm:text-sm md:text-base font-black tabular-nums px-1.5 py-0.5 rounded shadow-xs ${
+                  className={`font-black tabular-nums leading-none rounded shadow-xs ${
+                    isMiniBoard
+                      ? 'text-[9px] px-0.5 py-0.5'
+                      : isCompactBoard
+                      ? 'text-[10px] sm:text-xs px-1 py-0.5'
+                      : 'text-xs sm:text-sm px-1.5 py-0.5'
+                  } ${
                     isEncounterFrom || isEncounterTo
                       ? 'text-white bg-slate-900'
                       : isFinish
@@ -196,29 +217,53 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 
                 {/* Prominent High-Contrast Badges */}
                 {isFinish && (
-                  <span className="text-[10px] sm:text-xs font-black text-amber-900 uppercase tracking-tighter bg-amber-300 px-1.5 py-0.5 rounded shadow-xs">
-                    🏆 MENANG
+                  <span
+                    className={`font-black text-amber-900 uppercase tracking-tighter bg-amber-300 rounded shadow-xs leading-none ${
+                      isMiniBoard ? 'text-[8px] px-0.5 py-0.5' : 'text-[9px] sm:text-[10px] px-1 py-0.5'
+                    }`}
+                  >
+                    {isMiniBoard ? '🏆' : '🏆 MENANG'}
                   </span>
                 )}
                 {isStart && (
-                  <span className="text-[10px] sm:text-xs font-black text-emerald-900 uppercase tracking-tighter bg-emerald-300 px-1.5 py-0.5 rounded shadow-xs">
-                    MULA
+                  <span
+                    className={`font-black text-emerald-900 uppercase tracking-tighter bg-emerald-300 rounded shadow-xs leading-none ${
+                      isMiniBoard ? 'text-[8px] px-0.5 py-0.5' : 'text-[9px] sm:text-[10px] px-1 py-0.5'
+                    }`}
+                  >
+                    {isMiniBoard ? '▶' : 'MULA'}
                   </span>
                 )}
                 {hasLadderStart && (
-                  <span className="text-[9px] sm:text-[11px] font-black text-amber-950 bg-amber-300 border border-amber-400 px-1.5 py-0.5 rounded shadow-xs flex items-center gap-0.5">
-                    🪜 KAKI TANGGA
+                  <span
+                    className={`font-black text-amber-950 bg-amber-300 border border-amber-400 rounded shadow-xs flex items-center gap-0.5 leading-none ${
+                      isMiniBoard
+                        ? 'text-[8px] px-0.5 py-0.5'
+                        : isCompactBoard
+                        ? 'text-[9px] px-1 py-0.5'
+                        : 'text-[9px] sm:text-[10px] px-1 py-0.5'
+                    }`}
+                  >
+                    {isMiniBoard || isCompactBoard ? '🪜' : '🪜 TANGGA'}
                   </span>
                 )}
                 {hasSnakeStart && (
-                  <span className="text-[9px] sm:text-[11px] font-black text-white bg-rose-600 border border-rose-700 px-1.5 py-0.5 rounded shadow-xs flex items-center gap-0.5 animate-pulse">
-                    🐍 KEPALA ULAR
+                  <span
+                    className={`font-black text-white bg-rose-600 border border-rose-700 rounded shadow-xs flex items-center gap-0.5 animate-pulse leading-none ${
+                      isMiniBoard
+                        ? 'text-[8px] px-0.5 py-0.5'
+                        : isCompactBoard
+                        ? 'text-[9px] px-1 py-0.5'
+                        : 'text-[9px] sm:text-[10px] px-1 py-0.5'
+                    }`}
+                  >
+                    {isMiniBoard || isCompactBoard ? '🐍' : '🐍 ULAR'}
                   </span>
                 )}
               </div>
 
               {/* Tokens clustered inside square */}
-              <div className="relative flex flex-wrap items-center justify-center gap-1 z-20 my-auto">
+              <div className="relative flex flex-wrap items-center justify-center gap-0.5 z-20 my-auto min-h-0">
                 {squareTeams.map((t) => {
                   const isActive = teams[activeTeamIndex]?.id === t.id;
                   // If the active team is in transit along snake/ladder, hide from static square!
@@ -232,6 +277,22 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                     return null;
                   }
 
+                  const tokenSizeClass = isMiniBoard
+                    ? squareTeams.length > 2
+                      ? 'w-3.5 h-3.5 text-[9px]'
+                      : 'w-4 h-4 text-[10px]'
+                    : isCompactBoard
+                    ? squareTeams.length > 4
+                      ? 'w-4 h-4 text-[10px]'
+                      : squareTeams.length > 2
+                      ? 'w-5 h-5 text-xs'
+                      : 'w-6 h-6 text-sm'
+                    : squareTeams.length > 4
+                    ? 'w-5 h-5 text-xs'
+                    : squareTeams.length > 2
+                    ? 'w-6 h-6 text-sm'
+                    : 'w-7 h-7 sm:w-8 sm:h-8 text-base sm:text-lg';
+
                   return (
                     <div
                       key={t.id}
@@ -239,16 +300,12 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                       style={{
                         backgroundColor: t.color,
                         boxShadow: isActive
-                          ? `0 0 16px 5px ${t.color}, 0 0 4px #000000`
-                          : '0 2px 6px rgba(0,0,0,0.3)',
+                          ? `0 0 12px 3px ${t.color}, 0 0 3px #000000`
+                          : '0 2px 4px rgba(0,0,0,0.3)',
                       }}
-                      className={`relative flex items-center justify-center rounded-full text-white cursor-pointer transition-transform ${
-                        squareTeams.length > 4
-                          ? 'w-5 h-5 text-xs'
-                          : squareTeams.length > 2
-                          ? 'w-6 h-6 sm:w-7 sm:h-7 text-sm'
-                          : 'w-7 h-7 sm:w-9 sm:h-9 text-base sm:text-lg'
-                      } ${isActive ? 'scale-125 ring-4 ring-amber-400 z-30 animate-bounce' : 'hover:scale-110'}`}
+                      className={`relative flex items-center justify-center rounded-full text-white cursor-pointer transition-transform ${tokenSizeClass} ${
+                        isActive ? 'scale-125 ring-2 sm:ring-4 ring-amber-400 z-30 animate-bounce' : 'hover:scale-110'
+                      }`}
                     >
                       <span className="select-none leading-none drop-shadow-md">
                         {t.icon}
@@ -259,28 +316,30 @@ export const GameBoard: React.FC<GameBoardProps> = ({
               </div>
 
               {/* Bottom Square Footer: Sub-labels indicating destination/source */}
-              <div className="z-10 pointer-events-none mt-auto">
-                {hasLadderStart && (
-                  <div className="text-[8px] sm:text-[10px] font-black text-amber-950 bg-amber-200/95 px-1 py-0.5 rounded text-center border border-amber-400 shadow-xs">
-                    Panjat ke #{hasLadderStart.end}
-                  </div>
-                )}
-                {hasSnakeStart && (
-                  <div className="text-[8px] sm:text-[10px] font-black text-rose-950 bg-rose-200/95 px-1 py-0.5 rounded text-center border border-rose-400 shadow-xs">
-                    Gelongsor ke #{hasSnakeStart.end}
-                  </div>
-                )}
-                {hasLadderEnd && (
-                  <div className="text-[8px] sm:text-[10px] font-bold text-amber-800 bg-amber-50/90 px-1 py-0.5 rounded text-center border border-amber-200">
-                    ▲ Puncak (Selamat, dr #{hasLadderEnd.start})
-                  </div>
-                )}
-                {hasSnakeEnd && (
-                  <div className="text-[8px] sm:text-[10px] font-bold text-emerald-800 bg-emerald-50/90 px-1 py-0.5 rounded text-center border border-emerald-200">
-                    ▼ Ekor (Selamat, dr #{hasSnakeEnd.start})
-                  </div>
-                )}
-              </div>
+              {!isMiniBoard && (
+                <div className="z-10 pointer-events-none mt-auto shrink-0">
+                  {hasLadderStart && (
+                    <div className="text-[8px] sm:text-[9px] font-black text-amber-950 bg-amber-200/95 px-0.5 py-0.5 rounded text-center border border-amber-400 shadow-xs truncate leading-none">
+                      {isCompactBoard ? `↗ #${hasLadderStart.end}` : `Panjat #${hasLadderStart.end}`}
+                    </div>
+                  )}
+                  {hasSnakeStart && (
+                    <div className="text-[8px] sm:text-[9px] font-black text-rose-950 bg-rose-200/95 px-0.5 py-0.5 rounded text-center border border-rose-400 shadow-xs truncate leading-none">
+                      {isCompactBoard ? `↘ #${hasSnakeStart.end}` : `Turun #${hasSnakeStart.end}`}
+                    </div>
+                  )}
+                  {!isCompactBoard && hasLadderEnd && (
+                    <div className="text-[8px] font-bold text-amber-800 bg-amber-50/90 px-0.5 py-0.5 rounded text-center border border-amber-200 truncate leading-none">
+                      ▲ Dr #{hasLadderEnd.start}
+                    </div>
+                  )}
+                  {!isCompactBoard && hasSnakeEnd && (
+                    <div className="text-[8px] font-bold text-emerald-800 bg-emerald-50/90 px-0.5 py-0.5 rounded text-center border border-emerald-200 truncate leading-none">
+                      ▼ Dr #{hasSnakeEnd.start}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           );
         })}
@@ -293,19 +352,19 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         >
           <defs>
             <linearGradient id="ladderRail" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#f59e0b" />
-              <stop offset="100%" stop-color="#b45309" />
+              <stop offset="0%" stopColor="#f59e0b" />
+              <stop offset="100%" stopColor="#b45309" />
             </linearGradient>
             <linearGradient id="ladderRailActive" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#fef08a" />
-              <stop offset="50%" stop-color="#f59e0b" />
-              <stop offset="100%" stop-color="#b45309" />
+              <stop offset="0%" stopColor="#fef08a" />
+              <stop offset="50%" stopColor="#f59e0b" />
+              <stop offset="100%" stopColor="#b45309" />
             </linearGradient>
             <linearGradient id="snakeBodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#ef4444" />
-              <stop offset="40%" stop-color="#f97316" />
-              <stop offset="70%" stop-color="#10b981" />
-              <stop offset="100%" stop-color="#047857" />
+              <stop offset="0%" stopColor="#ef4444" />
+              <stop offset="40%" stopColor="#f97316" />
+              <stop offset="70%" stopColor="#10b981" />
+              <stop offset="100%" stopColor="#047857" />
             </linearGradient>
             <filter id="glowDrop" x="-20%" y="-20%" width="140%" height="140%">
               <feDropShadow dx="2" dy="4" stdDeviation="4" floodColor="#0f172a" floodOpacity="0.4" />

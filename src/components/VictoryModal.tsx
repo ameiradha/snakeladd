@@ -52,8 +52,8 @@ export const VictoryModal: React.FC<VictoryModalProps> = ({
   const sortedTeams = [...allTeams].sort((a, b) => b.currentSquare - a.currentSquare);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-sm">
-      <div className="relative w-full max-w-2xl bg-white border-4 border-amber-400 rounded-3xl shadow-2xl p-6 sm:p-8 text-center space-y-6 overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-5 bg-slate-900/60 backdrop-blur-sm">
+      <div className="relative w-full max-w-2xl max-h-[95dvh] overflow-y-auto bg-white border-4 border-amber-400 rounded-3xl shadow-2xl p-4 sm:p-7 text-center space-y-4 sm:space-y-5">
         {/* Glow backdrop */}
         <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-96 h-96 bg-amber-200/50 rounded-full blur-3xl pointer-events-none" />
 

@@ -143,61 +143,61 @@ export const ActiveGameScreen: React.FC<ActiveGameScreenProps> = ({
     : null;
 
   return (
-    <div className="w-full h-[calc(100vh-64px)] max-h-[100vh] overflow-hidden flex flex-col p-2 sm:p-3 bg-slate-100 space-y-2">
-      {/* Top Game Controls Toolbar - Bright Theme */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2 bg-white border-2 border-slate-200 rounded-2xl shadow-sm shrink-0">
+    <div className="w-full h-full overflow-hidden flex flex-col p-1.5 sm:p-2.5 bg-slate-100 gap-1.5 sm:gap-2.5">
+      {/* Top Game Controls Toolbar - Compact Single Row */}
+      <div className="flex items-center justify-between gap-2 px-2.5 sm:px-4 py-1.5 bg-white border-2 border-slate-200 rounded-xl sm:rounded-2xl shadow-xs shrink-0">
         {/* Left: Active Team Turn */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <div
-            className="w-10 h-10 rounded-full flex items-center justify-center text-xl shadow-md shrink-0 ring-2 ring-slate-800"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center text-base sm:text-lg shadow-sm shrink-0 ring-2 ring-slate-800"
             style={{ backgroundColor: activeTeam.color }}
           >
             {activeTeam.icon}
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-black text-slate-500 uppercase tracking-wider">
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] sm:text-xs font-black text-slate-500 uppercase tracking-wider whitespace-nowrap">
                 Pusingan #{gameState.turnNumber}
               </span>
               {activeTeam.isSkippedForTurn && (
-                <span className="text-[10px] font-black text-rose-700 bg-rose-100 px-2 py-0.5 rounded-full border border-rose-300">
+                <span className="text-[9px] sm:text-[10px] font-black text-rose-700 bg-rose-100 px-1.5 py-0.5 rounded border border-rose-300 whitespace-nowrap">
                   DILANGKAU
                 </span>
               )}
             </div>
-            <h3 className="text-base sm:text-lg font-black text-slate-900 leading-tight">
+            <h3 className="text-xs sm:text-base font-black text-slate-900 leading-tight truncate">
               {activeTeam.name}
             </h3>
           </div>
         </div>
 
         {/* Center: Live Action Feedback */}
-        <div className="hidden md:block flex-1 max-w-xl mx-2 text-center">
-          <span className="text-xs sm:text-sm font-bold text-slate-800 line-clamp-1 bg-amber-50 py-1.5 px-4 rounded-xl border border-amber-200">
+        <div className="hidden lg:block flex-1 max-w-xl mx-2 text-center min-w-0">
+          <span className="inline-block max-w-full truncate text-xs sm:text-sm font-bold text-slate-800 bg-amber-50 py-1 px-3 rounded-xl border border-amber-200">
             {gameState.lastActionDescription}
           </span>
         </div>
 
         {/* Right: Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           <button
             type="button"
             disabled={!engine.canUndo()}
             onClick={handleUndo}
             title="Undur semula pergerakan terakhir"
-            className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 disabled:opacity-30 cursor-pointer transition active:scale-95 shadow-xs"
+            className="flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 disabled:opacity-30 cursor-pointer transition active:scale-95 shadow-xs whitespace-nowrap"
           >
-            <Undo2 className="w-4 h-4 text-slate-700" />
-            <span className="hidden sm:inline">Undur (Undo)</span>
+            <Undo2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-700" />
+            <span className="hidden sm:inline">Undur</span>
           </button>
 
           <button
             type="button"
             onClick={() => setIsPaused(!isPaused)}
             title={isPaused ? 'Sambung permainan' : 'Jeda permainan'}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 cursor-pointer transition shadow-xs"
+            className="flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 cursor-pointer transition shadow-xs whitespace-nowrap"
           >
-            {isPaused ? <Play className="w-4 h-4 text-emerald-600" /> : <Pause className="w-4 h-4 text-slate-700" />}
+            {isPaused ? <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600" /> : <Pause className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-700" />}
             <span className="hidden sm:inline">{isPaused ? 'Sambung' : 'Jeda'}</span>
           </button>
 
@@ -205,27 +205,27 @@ export const ActiveGameScreen: React.FC<ActiveGameScreenProps> = ({
             type="button"
             onClick={handleRestart}
             title="Mula semula permainan"
-            className="p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer border border-slate-200"
+            className="p-1.5 sm:p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer border border-slate-200"
           >
-            <RotateCcw className="w-4 h-4" />
+            <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </button>
 
           <button
             type="button"
             onClick={handleEndGameConfirm}
             title="Tamatkan permainan & simpan markah"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 cursor-pointer transition shadow-xs"
+            className="flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 cursor-pointer transition shadow-xs whitespace-nowrap"
           >
-            <StopCircle className="w-4 h-4 text-rose-600" />
+            <StopCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-600" />
             <span>Tamat</span>
           </button>
         </div>
       </div>
 
-      {/* Main Play Area - Fits in Viewport Without Scrolling */}
-      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-3 items-stretch overflow-hidden">
-        {/* Left Column: Big 100-Square Game Board (8 cols) */}
-        <div className="lg:col-span-8 h-full flex items-center justify-center min-h-0 overflow-hidden">
+      {/* Main Play Area - Strict Fit-to-Screen Without Scrolling */}
+      <div className="flex-1 min-h-0 flex flex-col landscape:flex-row lg:flex-row gap-1.5 sm:gap-2.5 overflow-hidden">
+        {/* Game Board Area - Takes Maximum Available Square Space */}
+        <div className="flex-1 min-w-0 min-h-0 flex items-center justify-center overflow-hidden">
           <GameBoard
             teams={gameState.teams}
             activeTeamIndex={gameState.activeTeamIndex}
@@ -237,9 +237,9 @@ export const ActiveGameScreen: React.FC<ActiveGameScreenProps> = ({
           />
         </div>
 
-        {/* Right Column: Large Dice Controls & Large Scoreboard (4 cols) */}
-        <div className="lg:col-span-4 h-full flex flex-col gap-3 min-h-0 overflow-hidden">
-          {/* Big Digital Dice Roller */}
+        {/* Right / Bottom Controls Column: Dice & Live Scoreboard */}
+        <div className="shrink-0 w-full portrait:h-[186px] portrait:max-h-[38vh] sm:portrait:h-[228px] landscape:h-full landscape:w-[255px] sm:landscape:w-[285px] lg:h-full lg:w-[325px] xl:w-[360px] flex flex-col gap-1.5 sm:gap-2.5 min-h-0 overflow-hidden">
+          {/* Digital Dice Roller */}
           <div className="shrink-0">
             <DiceRoller
               value={gameState.diceValue}
@@ -255,7 +255,7 @@ export const ActiveGameScreen: React.FC<ActiveGameScreenProps> = ({
             />
           </div>
 
-          {/* Big Live Scoreboard - Takes Remaining Height */}
+          {/* Live Scoreboard - Takes Remaining Height */}
           <div className="flex-1 min-h-0 overflow-hidden">
             <Scoreboard
               teams={gameState.teams}
